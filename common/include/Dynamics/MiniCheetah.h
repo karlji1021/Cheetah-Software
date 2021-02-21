@@ -21,7 +21,7 @@ Quadruped<T> buildMiniCheetah() {
   Quadruped<T> cheetah;
   cheetah._robotType = RobotType::MINI_CHEETAH;
 
-  cheetah._bodyMass = 3.3;
+  cheetah._bodyMass = 5.868;
   cheetah._bodyLength = 0.19 * 2;
   cheetah._bodyWidth = 0.049 * 2;
   cheetah._bodyHeight = 0.05 * 2;
@@ -85,7 +85,7 @@ Quadruped<T> buildMiniCheetah() {
   SpatialInertia<T> rotorInertiaY(0.055, rotorCOM, rotorRotationalInertiaY);
 
   Mat3<T> bodyRotationalInertia;
-  bodyRotationalInertia << 11253, 0, 0, 0, 36203, 0, 0, 0, 42673;
+  bodyRotationalInertia << 20001, 0, 0, 0, 75877, 0, 0, 0, 85404;
   bodyRotationalInertia = bodyRotationalInertia * 1e-6;
   Vec3<T> bodyCOM(0, 0, 0);
   SpatialInertia<T> bodyInertia(cheetah._bodyMass, bodyCOM,

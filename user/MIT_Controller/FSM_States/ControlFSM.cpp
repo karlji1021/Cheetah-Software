@@ -151,7 +151,7 @@ void ControlFSM<T>::runFSM() {
       // Run the state transition
       if (transitionData.done) {
         // Exit the current state cleanly
-        currentState->onExit();
+        currentState->onExit();  // normally nothing to clean up.
 
         // Print finalizing transition info
         //printInfo(2);
@@ -194,7 +194,7 @@ template <typename T>
 FSM_OperatingMode ControlFSM<T>::safetyPreCheck() {
   // Check for safe orientation if the current state requires it
   if (currentState->checkSafeOrientation && data.controlParameters->control_mode != K_RECOVERY_STAND) {
-    if (!safetyChecker->checkSafeOrientation()) {
+    if (!safetyChecker->checkSafeOrientation()) {  // if roll or pitch >= 0.5, then emergency stop.
       operatingMode = FSM_OperatingMode::ESTOP;
       std::cout << "broken: Orientation Safety Ceck FAIL" << std::endl;
     }

@@ -3,6 +3,9 @@
 
 #include <RobotController.h>
 #include "JPosUserParameters.h"
+#include <torch/script.h>
+#include <cstring>
+
 
 class JPos_Controller:public RobotController{
   public:
@@ -11,7 +14,7 @@ class JPos_Controller:public RobotController{
     }
     virtual ~JPos_Controller(){}
 
-    virtual void initializeController(){}
+    virtual void initializeController();
     virtual void runController();
     virtual void updateVisualization(){}
     virtual ControlParameters* getUserControlParameters() {
@@ -19,6 +22,23 @@ class JPos_Controller:public RobotController{
     }
   protected:
     DVec<float> _jpos_ini;
+
+  float _bodyHeight;
+  Eigen::Matrix<float, 3, 1> _bodyOri;
+  Eigen::Matrix<float, 12, 1> _jointQ;
+  Eigen::Matrix<float, 3, 1> _bodyVel;
+  Eigen::Matrix<float, 3, 1> _bodyAngularVel;
+  Eigen::Matrix<float, 12, 1> _jointQd;
+  Eigen::VectorXf _obs;
+  int _obsDim;
+  Eigen::VectorXf _obsMean, _obsVar;
+
+  std::string _loadPath;
+  torch::jit::script::Module _actor;
+  std::vector<torch::jit::IValue> _input;
+  std::vector<torch::jit::IValue> _action;
+
+
   JPosUserParameters userParameters;
 };
 
