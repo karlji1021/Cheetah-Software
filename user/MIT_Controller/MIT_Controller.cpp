@@ -27,6 +27,7 @@ void MIT_Controller::initializeController() {
 void MIT_Controller::runController() {
   // Find the current gait schedule
   _gaitScheduler->step();
+//  std::cout << "bodyHeight: " << _stateEstimate->position(2) << std::endl;
 
   // Find the desired state trajectory
   _desiredStateCommand->convertToStateCommands();

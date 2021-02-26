@@ -114,12 +114,24 @@ void SpineBoard::run() {
                     cmd->tau_hip_ff[board_num];
   }
 
-  /// No knee softstop right now ///
-  torque_out[2] = cmd->kp_knee[board_num] *
-                      (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-                  cmd->kd_knee[board_num] *
-                      (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-                  cmd->tau_knee_ff[board_num];
+  /// Check knee softstop ///
+  /// modified by Gwanghyeon ///
+  if (data->q_knee[board_num] > q_limit_p[2]) {
+    torque_out[2] = kp_softstop * (q_limit_p[2] - data->q_knee[board_num]) -
+        kd_softstop * (data->qd_knee[board_num]) +
+        cmd->tau_knee_ff[board_num];
+  } else if (data->q_knee[board_num] < q_limit_n[2]) {
+    torque_out[2] = kp_softstop * (q_limit_n[2] - data->q_knee[board_num]) -
+        kd_softstop * (data->qd_knee[board_num]) +
+        cmd->tau_knee_ff[board_num];
+  } else {
+    torque_out[2] = cmd->kp_knee[board_num] *
+        (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+        cmd->kd_knee[board_num] *
+            (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+        cmd->tau_knee_ff[board_num];
+  }
+
 
   const float* torque_limits = disabled_torque;
 

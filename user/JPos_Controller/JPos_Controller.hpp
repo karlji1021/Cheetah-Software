@@ -7,12 +7,12 @@
 #include <cstring>
 
 
-class JPos_Controller:public RobotController{
+class karl_Controller: public RobotController{
   public:
-    JPos_Controller():RobotController(),_jpos_ini(cheetah::num_act_joint){
+    karl_Controller(): RobotController(), _jpos_ini(cheetah::num_act_joint){
     _jpos_ini.setZero();
     }
-    virtual ~JPos_Controller(){}
+    virtual ~karl_Controller(){}
 
     virtual void initializeController();
     virtual void runController();
@@ -39,7 +39,7 @@ class JPos_Controller:public RobotController{
   std::vector<torch::jit::IValue> _action;
 
 
-  JPosUserParameters userParameters;
+  karlUserParameters userParameters;
 };
 
 #endif

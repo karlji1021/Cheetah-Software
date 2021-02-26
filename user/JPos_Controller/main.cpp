@@ -10,6 +10,6 @@
 #include "JPos_Controller.hpp"
 
 int main(int argc, char** argv) {
-  main_helper(argc, argv, new JPos_Controller());
+  main_helper(argc, argv, new karl_Controller());
   return 0;
 }

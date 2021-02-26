@@ -3,9 +3,9 @@
 
 #include "ControlParameters/ControlParameters.h"
 
-class JPosUserParameters : public ControlParameters {
+class karlUserParameters : public ControlParameters {
 public:
-  JPosUserParameters()
+  karlUserParameters()
       : ControlParameters("user-parameters"),
         INIT_PARAMETER(tau_ff),
         INIT_PARAMETER(kp),
