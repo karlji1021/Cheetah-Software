@@ -70,8 +70,8 @@ class SpineBoard {
   const float max_torque[3] = {17.f, 17.f, 26.f};  // TODO CHECK WITH BEN
   const float wimp_torque[3] = {6.f, 6.f, 6.f};    // TODO CHECK WITH BEN
   const float disabled_torque[3] = {0.f, 0.f, 0.f};
-  const float q_limit_p[3] = {2.09f, 4.7f, 2.7f};  // modified by Gwanghyeon
-  const float q_limit_n[3] = {-2.09f, -4.7f, 2.7f};  // modified by Gwanghyeon
+  const float q_limit_p[3] = {1.5f, 5.0f, 2.7f};  // modified by Gwanghyeon
+  const float q_limit_n[3] = {-1.5f, -5.0f, -2.7f};  // modified by Gwanghyeon
   const float kp_softstop = 100.f;
   const float kd_softstop = 0.4f;
   s32 iter_counter = 0;

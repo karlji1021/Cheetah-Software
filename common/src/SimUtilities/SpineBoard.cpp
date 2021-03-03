@@ -132,6 +132,12 @@ void SpineBoard::run() {
         cmd->tau_knee_ff[board_num];
   }
 
+//  torque_out[2] = cmd->kp_knee[board_num] *
+//      (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+//      cmd->kd_knee[board_num] *
+//          (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+//      cmd->tau_knee_ff[board_num];
+
 
   const float* torque_limits = disabled_torque;
 

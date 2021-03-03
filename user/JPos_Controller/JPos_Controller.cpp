@@ -3,7 +3,7 @@
 
 
 void karl_Controller::initializeController() {
-  _loadPath = "/home/user/raisim_workspace/Cheetah-Software/actor_model/actor_800.pt";
+  _loadPath = "/home/user/raisim_workspace/Cheetah-Software/actor_model/actor_1700.pt";
   try {
     // Deserialize the ScriptModule from a file using torch::jit::load().
     _actor = torch::jit::load(_loadPath);
@@ -11,13 +11,13 @@ void karl_Controller::initializeController() {
   catch (const c10::Error& e) {
     std::cerr << "!!!!Error loading the model!!!!\n";
   }
-  _obsDim = 16;
+  _obsDim = 34;
 
   _obsMean.setZero(_obsDim);
   _obsVar.setZero(_obsDim);
   std::string in_line;
-  std::ifstream obsMean_file("/home/user/raisim_workspace/Cheetah-Software/actor_model/mean800.csv");
-  std::ifstream obsVariance_file("/home/user/raisim_workspace/Cheetah-Software/actor_model/var800.csv");
+  std::ifstream obsMean_file("/home/user/raisim_workspace/Cheetah-Software/actor_model/mean1700.csv");
+  std::ifstream obsVariance_file("/home/user/raisim_workspace/Cheetah-Software/actor_model/var1700.csv");
   if(obsMean_file.is_open()) {
     for(int i = 0; i < _obsMean.size(); i++){
       std::getline(obsMean_file, in_line);
@@ -60,7 +60,7 @@ void karl_Controller::runController(){
 
   /// TODO: check each variable is appropriate.
   _bodyHeight = _stateEstimate->position(2);  // body height 1
-  _bodyOri << _stateEstimate->rBody.transpose().row(2).transpose();  //_bodyOri(2) += 1; // roll pitch yaw 3, raisim has default yaw value of 1.
+  _bodyOri << _stateEstimate->rBody.transpose().row(2).transpose(); // body orientation 3
   _jointQ << _legController->datas[0].q, _legController->datas[1].q, _legController->datas[2].q, _legController->datas[3].q;  // joint angles 3 3 3 3 = 12
   _bodyVel << _stateEstimate->vWorld;  // velocity 3
   _bodyAngularVel << _stateEstimate->omegaWorld;  // angular velocity 3
@@ -69,14 +69,20 @@ void karl_Controller::runController(){
   _obs.setZero(_obsDim);
   _obs << _bodyHeight,
     _bodyOri,
-    _jointQ;
-//    _bodyVel,
-//    _bodyAngularVel,
-//    _jointQd;
+    _jointQ,
+    _bodyVel,
+    _bodyAngularVel,
+    _jointQd;
 
+  static int iter(0);
+  ++iter;
+
+//  std::cout << "obs: " << _obs << std::endl;
   ///
-//  std::cout << "Test 1: Observation before normalization." << std::endl;
-//  std::cout << _obs << std::endl;
+  if(iter%1000 == 0) {
+    std::cout << "Test 1: Observation before normalization." << std::endl;
+    std::cout << _obs << std::endl;
+  }
   ///
 
   for(int i = 0; i < _obs.size(); i++) {
@@ -98,9 +104,6 @@ void karl_Controller::runController(){
   _input.pop_back();
 
   ///
-//  std::cout << "Test 2-2: Observation after normalization, and after being converted to tensor." << std::endl;
-//  std::cout << torch::from_blob(_obs.data(), {_obs.cols(),_obs.rows()}) << std::endl;
-
 //  std::cout << "Test 3: Actor must have the same output for the same input." << std::endl;
 //  Eigen::VectorXf obs_test;
 //  obs_test.setZero(_obsDim);
@@ -122,7 +125,8 @@ void karl_Controller::runController(){
   Eigen::VectorXd pTarget_12;
   q_init.setZero(12);
   pTarget_12.setZero(12);
-  q_init << -0.726685, -0.947298, 2.7, 0.726636, -0.947339, 2.7, -0.727, -0.94654, 2.65542, 0.727415, -0.946541, 2.65542;
+//  q_init << -0.726685, -0.947298, 2.7, 0.726636, -0.947339, 2.7, -0.727, -0.94654, 2.65542, 0.727415, -0.946541, 2.65542;
+  q_init << 0, -0.7854, 1.8326, 0, -0.7854, 1.8326, 0, -0.7854, 1.8326, 0, -0.7854, 1.8326;
   pTarget_12 = action_eigen.row(0).cast<double>();
   pTarget_12 *= 0.3;
   pTarget_12 += q_init;
@@ -135,8 +139,8 @@ void karl_Controller::runController(){
 //  std::cout << "Kd: " << kdMat << std::endl;
   ///
 
-  static int iter(0);
-  ++iter;
+  _legController->_maxTorque = 18;
+  _legController->_legsEnabled = true;
 
   if(iter < 10){
     for(int leg(0); leg<4; ++leg){
@@ -144,10 +148,31 @@ void karl_Controller::runController(){
         _jpos_ini[3*leg+jidx] = _legController->datas[leg].q[jidx];
       }
     }
+    return;
+  } else if(iter < 1000) {
+    for(int leg(0); leg<4; ++leg){
+      for(int jidx(0); jidx<3; ++jidx){
+        _legController->commands[leg].qDes[jidx] = _jpos_ini[3*leg+jidx] + iter/999.*(qInitVec(leg*3 + jidx)-_jpos_ini[3*leg+jidx]);
+        _legController->commands[leg].qdDes[jidx] = 0.;
+        _legController->commands[leg].tauFeedForward[jidx] = userParameters.tau_ff;
+      }
+      _legController->commands[leg].kpJoint = kpMat*10;
+      _legController->commands[leg].kdJoint = kdMat*10;
+
+//      std::cout << "Joint position: " << _legController->datas[leg].q << std::endl;
+    }
+
+    return;
   }
 
-  _legController->_maxTorque = 18;
-  _legController->_legsEnabled = true;
+//  if(iter % 1000 == 0) {
+//    std::cout << "observation after normalization: " << std::endl;
+//    std::cout << "obs: " << _obs << std::endl;
+//    std::cout << "joint target after scaling: " << std::endl;
+//    std::cout << "pTarget12: " << pTarget_12 << std::endl;
+//  }
+
+
 
   if(userParameters.calibrate > 0.4) {
     _legController->_calibrateEncoders = userParameters.calibrate;
@@ -157,12 +182,12 @@ void karl_Controller::runController(){
     } else {
       _legController->_zeroEncoders = false;
 
-      ///
-//      std::cout << "Test 6: robot test." << std::endl;
-//      std::cout << "Same movement for the same action input" << std::endl;
       for(int leg(0); leg<4; ++leg){
         for(int jidx(0); jidx<3; ++jidx){
-//          std::cout << "joint angle: " << _legController->datas[leg].q[jidx];
+
+//          pTarget_12(leg*3 + jidx) = _legController->datas[leg].q[jidx] + 0.1 * (pTarget_12(leg*3 + jidx) - _legController->datas[leg].q[jidx]);
+//          std::cout << "joint angle" << leg << jidx << ": " << _legController->datas[leg].q[jidx];
+//          std::cout << "joint target" << leg << jidx << ": " << pTarget_12(leg*3 + jidx);
           _legController->commands[leg].qDes[jidx] = pTarget_12(leg*3 + jidx);
 //          _legController->commands[leg].qDes[jidx] = qInitVec(leg*3 + jidx);
           _legController->commands[leg].qdDes[jidx] = 0.;
@@ -174,12 +199,6 @@ void karl_Controller::runController(){
 //      std::cout << std::endl;
     }
   }
-
-
-
-  //if(iter%200 ==0){
-    //printf("value 1, 2: %f, %f\n", userParameters.testValue, userParameters.testValue2);
-  //}
 
 
 }
